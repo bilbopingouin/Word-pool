@@ -1,8 +1,6 @@
 import scipy.special
 import enchant
 
-vocals = ['a','i','o','e']
-consomns = ['m','p','r','l','s','n']
 
 # remaining: u ä ö ü ei ai eu au
 # remaining: b c d f g h j k q t v w x y z
@@ -35,24 +33,25 @@ def print_array(array):
 def add_layer(blocks,size):
     #print('s='+str(size))
     if 1>=size:
-        return blocks[:]
+        return blocks
     else:
-        out = []
+        out = set()
         for b in blocks:
             for e in add_layer(blocks,size-1):
                 #print('b: '+b+', e: '+e)
-                out += [b+e]
-        return out[:]
+                out.add(b+e)
+        return out
 
 def generate_words(blocks, size):
-    out = []
+    out = set()
+    bset = set(blocks)
 
     #print('Starting generating words...')
     #print(out)
 
     for s in range(size):
         #print('gw'+str(s))
-        out += sorted(set(add_layer(blocks,s+1)))
+        out = out.union(add_layer(bset,s+1))
         #print(out)
 
     #print('Done')
@@ -146,6 +145,9 @@ def next_letter():
 
 if __name__ == '__main__':
     global vocals,consomns
+
+    vocals = ['a','i','o','e']
+    consomns = ['m','p','r','l','s','n']
 
     get_words(vocals,consomns)
 
