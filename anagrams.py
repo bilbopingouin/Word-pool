@@ -4,18 +4,17 @@ import enchant
 vocals = ['a','i','o','e']
 consomns = ['m','p','r','l','s','n']
 
+# remaining: u ä ö ü ei ai eu au
+# remaining: b c d f g h j k q t v w x y z
+
 ################################
 
-def init():
-    global vocals, consomns
-
+def init(vocals,consomns):
     return vocals+consomns
 
 ################################
 
-def extend():
-    global vocals, consomns
-
+def extend(vocals, consomns):
     ext=[]
 
     for v in vocals:
@@ -89,9 +88,9 @@ def prune(words):
 
 ################################
 
-if __name__ == '__main__':
-    blocks = init()
-    blocks += extend()
+def get_words(vocals,consomns,p=True):
+    blocks = init(vocals,consomns)
+    blocks += extend(vocals,consomns)
 
     #w = generate_words(['a','b'],1)
     #print_array(w)
@@ -111,5 +110,44 @@ if __name__ == '__main__':
     #print_array(w)
 
     dw = prune(w)
-    print(str(len(dw))+' German words:')
-    print_array(dw)
+    if p:
+        print(str(len(dw))+' German words:')
+        print_array(dw)
+    else:
+        return len(dw)
+
+################################
+
+def next_letter():
+    global vocals, consomns
+
+    allelements = set(list('abcdefghijklmnopqrstuvwxyzäöü')+['ei','ai','eu','au','ch','sch','sp','st'])
+    currentelements = set(vocals+consomns)
+    remaining = allelements-currentelements
+
+    #print(remaining)
+    possible = {}
+    cnt=1
+    for e in remaining:
+        #print('With letter '+e+': '+str(get_words(vocals,consomns+[e],p=False)))
+        print(str(cnt)+'. '+e+'...')
+        possible[e] = get_words(vocals,consomns+[e],p=False)
+        cnt+=1
+
+    print('\nNext letter to add: ')
+    #print ({k: v for k, v in sorted(possible.items(), key=lambda item: item[1])})
+    #for l in sorted_dict:
+        #print(l+': '+str(possible[l]))
+    for r in [k+': '+str(v) for k,v in sorted(possible.items(), key=lambda item: item[1], reverse=True)]:
+        print(r)
+
+
+################################
+
+if __name__ == '__main__':
+    global vocals,consomns
+
+    get_words(vocals,consomns)
+
+    next_letter()
+
