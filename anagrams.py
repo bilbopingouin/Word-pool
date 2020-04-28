@@ -3,6 +3,7 @@ import enchant
 import argparse
 import sys
 import os
+import multiprocessing as mp
 
 def arguments():
     parser = argparse.ArgumentParser(description='List of German words with given letters')
@@ -105,7 +106,8 @@ def prune(words):
 
 ################################
 
-def get_words(vocals,consomns,size,out='',p=True):
+def get_words(vocals,consomns,size,out='',p=False):
+    print('.', end=' ',flush=True)
     blocks = init(vocals,consomns)
     blocks += extend(vocals,consomns)
 
@@ -127,12 +129,20 @@ def next_letter(top,size):
     currentelements = set(vocals+consomns)
     remaining = allelements-currentelements
 
+    pool = mp.Pool(mp.cpu_count())
+    #print(mp.cpu_count())
+
     possible = {}
-    cnt=1
-    for e in remaining:
-        print('.',end=' ',flush=True)
-        possible[e] = get_words(vocals,consomns+[e],size,p=False)
-        cnt+=1
+    #for e in remaining:
+    #    print('.',end=' ',flush=True)
+    #    possible[e] = get_words(vocals,consomns+[e],size,p=False)
+    #p=False
+    results = [(e,pool.apply(get_words, args=(vocals,consomns+[e],size))) for e in remaining]
+    #print(results)
+
+    for r in results:
+        (l,c) = r
+        possible[l] = c
 
     print('\nNext letter to add: ')
     n=0
@@ -153,7 +163,7 @@ if __name__ == '__main__':
     vocals = ['a','i','o','e']
     consomns = ['m','p','r','l','s','n','g']
 
-    get_words(vocals,consomns,size,out=out)
+    get_words(vocals,consomns,size,out=out,p=True)
 
     if gnext:
         next_letter(top,size)
