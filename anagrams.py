@@ -1,9 +1,44 @@
 import scipy.special
 import enchant
+import argparse
+import sys
+import os
 
+def arguments():
+    parser = argparse.ArgumentParser(description='List of German words with given letters')
 
-# remaining: u ä ö ü ei ai eu au
-# remaining: b c d f g h j k q t v w x y z
+    parser.add_argument('-s','--size',help='Size of words [default: 3]',default='3',required=False)
+    parser.add_argument('-o','--output',help='Output file [default: \'\'/stdout]',default='',required=False)
+    parser.add_argument('-t','--top-next',help='Top letter for the next [default: 5]',default='5',required=False)
+    parser.add_argument('-n','--get-next',help='Calculate the number of words available for each possible next letter [default: false]',action='store_true')
+
+    try:
+        options = parser.parse_args()
+    except:
+        sys.exit(0)
+
+    if options.size.isdigit():
+        size = int(options.size)
+    else:
+        print('Error: size format wrong: '+options.size)
+        sys.exit(1)
+
+    if options.top_next.isdigit():
+        top = int(options.top_next)
+    else:
+        print('Error: top format wrong: '+options.top_next)
+
+    if '' == options.output:
+        out=''
+    else:
+        if os.path.isdir(os.path.dirname(options.output)) or '' == os.path.dirname(options.output):
+            out=options.output
+        else:
+            print('Error for output file: '+options.output)
+            sys.exit(1)
+        
+    return (size,top,out,options.get_next)
+
 
 ################################
 
@@ -23,22 +58,26 @@ def extend(vocals, consomns):
 
 ################################
 
-def print_array(array):
-    for e in array:
-        print(e, end='\t')
+def print_array(array,out=''):
+    if '' == out:
+        for e in array:
+            print(e, end='\t')
+    else:
+        with open(out,'wt') as f:
+            for e in array:
+                f.write(e+'\n')
+            f.close()
     print('')
 
 ################################
 
 def add_layer(blocks,size):
-    #print('s='+str(size))
     if 1>=size:
         return blocks
     else:
         out = set()
         for b in blocks:
             for e in add_layer(blocks,size-1):
-                #print('b: '+b+', e: '+e)
                 out.add(b+e)
         return out
 
@@ -46,16 +85,15 @@ def generate_words(blocks, size):
     out = set()
     bset = set(blocks)
 
-    #print('Starting generating words...')
-    #print(out)
-
     for s in range(size):
-        #print('gw'+str(s))
-        out = out.union(add_layer(bset,s+1))
-        #print(out)
+        if s==0:
+            out = set(bset)
+        else:
+            tm=set(out)
+            for b in bset:
+                for n in tm:
+                    out.add(n+b)
 
-    #print('Done')
-    #print(out)
     return out
 
 ################################
@@ -63,82 +101,46 @@ def generate_words(blocks, size):
 def prune(words):
     d = enchant.Dict('de_DE')
 
-    return (sorted(set(filter(lambda w: d.check(w), words))))
-
-# print('\nSyllables:')
-# for v in vocals:
-#     for c in consomns:
-#         print(c+v, end='\t')
-# print('')
-# 
-# print('\nCombination vocal+syllable:')
-# for v in vocals:
-#     for c in consomns:
-#         for v2 in vocals:
-#             print(v+c+v2, end='\t')
-# print('')
-# 
-# print('\nCombination syllable+vocal:')
-# for v in vocals:
-#     for c in consomns:
-#         for v2 in vocals:
-#             print(c+v+v2, end='\t')
-# print('')
+    return (sorted(set(filter(lambda w: d.check(w) or d.check(w.title()), words))))
 
 ################################
 
-def get_words(vocals,consomns,p=True):
+def get_words(vocals,consomns,size,out='',p=True):
     blocks = init(vocals,consomns)
     blocks += extend(vocals,consomns)
 
-    #w = generate_words(['a','b'],1)
-    #print_array(w)
-
-    #w = generate_words(['a','b'],2)
-    #print_array(w)
-
-    #w = generate_words(['a','b'],3)
-    #print_array(w)
-
-    #print('blocks:')
-    #print_array(blocks)
-
-    w = generate_words(blocks,3)
-
-    #print('words:')
-    #print_array(w)
+    w = generate_words(blocks,size)
 
     dw = prune(w)
     if p:
         print(str(len(dw))+' German words:')
-        print_array(dw)
+        print_array(dw,out=out)
     else:
         return len(dw)
 
 ################################
 
-def next_letter():
+def next_letter(top,size):
     global vocals, consomns
 
     allelements = set(list('abcdefghijklmnopqrstuvwxyzäöü')+['ei','ai','eu','au','ch','sch','sp','st'])
     currentelements = set(vocals+consomns)
     remaining = allelements-currentelements
 
-    #print(remaining)
     possible = {}
     cnt=1
     for e in remaining:
-        #print('With letter '+e+': '+str(get_words(vocals,consomns+[e],p=False)))
-        print(str(cnt)+'. '+e+'...')
-        possible[e] = get_words(vocals,consomns+[e],p=False)
+        print('.',end=' ',flush=True)
+        possible[e] = get_words(vocals,consomns+[e],size,p=False)
         cnt+=1
 
     print('\nNext letter to add: ')
-    #print ({k: v for k, v in sorted(possible.items(), key=lambda item: item[1])})
-    #for l in sorted_dict:
-        #print(l+': '+str(possible[l]))
+    n=0
     for r in [k+': '+str(v) for k,v in sorted(possible.items(), key=lambda item: item[1], reverse=True)]:
         print(r)
+        n+=1
+        if n>=top:
+            break;
 
 
 ################################
@@ -146,10 +148,13 @@ def next_letter():
 if __name__ == '__main__':
     global vocals,consomns
 
+    (size,top,out,gnext) = arguments()
+
     vocals = ['a','i','o','e']
-    consomns = ['m','p','r','l','s','n']
+    consomns = ['m','p','r','l','s','n','g']
 
-    get_words(vocals,consomns)
+    get_words(vocals,consomns,size,out=out)
 
-    next_letter()
+    if gnext:
+        next_letter(top,size)
 
