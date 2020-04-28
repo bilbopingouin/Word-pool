@@ -6,12 +6,19 @@ import os
 import multiprocessing as mp
 
 def arguments():
+    global vocals, consomns
+
+    def_voc = ','.join(['a','i','o','e','ei'])
+    def_consomns = ','.join(['m','p','r','l','s','n','g'])
+
     parser = argparse.ArgumentParser(description='List of German words with given letters')
 
     parser.add_argument('-s','--size',help='Size of words [default: 3]',default='3',required=False)
     parser.add_argument('-o','--output',help='Output file [default: \'\'/stdout]',default='',required=False)
     parser.add_argument('-t','--top-next',help='Top letter for the next [default: 5]',default='5',required=False)
     parser.add_argument('-n','--get-next',help='Calculate the number of words available for each possible next letter [default: false]',action='store_true')
+    parser.add_argument('-v','--vocals',help='List of comma-separated vocals [default: %s]' % (def_voc),default=def_voc,required=False)
+    parser.add_argument('-c','--consomns',help='List of comma-separated consomns [default: %s]' % (def_consomns),default=def_consomns,required=False)
 
     try:
         options = parser.parse_args()
@@ -37,6 +44,9 @@ def arguments():
         else:
             print('Error for output file: '+options.output)
             sys.exit(1)
+
+    vocals   = options.vocals.split(',')
+    consomns = options.consomns.split(',')
         
     return (size,top,out,options.get_next)
 
@@ -160,8 +170,8 @@ if __name__ == '__main__':
 
     (size,top,out,gnext) = arguments()
 
-    vocals = ['a','i','o','e']
-    consomns = ['m','p','r','l','s','n','g']
+    #vocals = ['a','i','o','e','ei']
+    #consomns = ['m','p','r','l','s','n','g']
 
     get_words(vocals,consomns,size,out=out,p=True)
 
