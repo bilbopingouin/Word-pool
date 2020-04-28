@@ -7,6 +7,7 @@ import multiprocessing as mp
 
 def arguments():
     global vocals, consomns
+    global chk_dict
 
     def_voc = ','.join(['a','i','o','e','ei'])
     def_consomns = ','.join(['m','p','r','l','s','n','g'])
@@ -19,6 +20,7 @@ def arguments():
     parser.add_argument('-n','--get-next',help='Calculate the number of words available for each possible next letter [default: false]',action='store_true')
     parser.add_argument('-v','--vocals',help='List of comma-separated vocals [default: %s]' % (def_voc),default=def_voc,required=False)
     parser.add_argument('-c','--consomns',help='List of comma-separated consomns [default: %s]' % (def_consomns),default=def_consomns,required=False)
+    parser.add_argument('-d','--no-check-dict',help='Check if the resulting words are in the Germany dictionary [default: true]',action='store_false')
 
     try:
         options = parser.parse_args()
@@ -47,6 +49,8 @@ def arguments():
 
     vocals   = options.vocals.split(',')
     consomns = options.consomns.split(',')
+
+    chk_dict = options.no_check_dict
         
     return (size,top,out,options.get_next)
 
@@ -110,9 +114,14 @@ def generate_words(blocks, size):
 ################################
 
 def prune(words):
-    d = enchant.Dict('de_DE')
+    global chk_dict
 
-    return (sorted(set(filter(lambda w: d.check(w) or d.check(w.title()), words))))
+    if chk_dict:
+        d = enchant.Dict('de_DE')
+
+        return (sorted(set(filter(lambda w: d.check(w) or d.check(w.title()), words))))
+    else:
+        return (sorted(words))
 
 ################################
 
