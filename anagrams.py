@@ -4,10 +4,12 @@ import argparse
 import sys
 import os
 import multiprocessing as mp
+import random
 
 def arguments():
     global vocals, consomns
     global chk_dict
+    global out_rnd
 
     def_voc = ','.join(['a','i','o','e','ei'])
     def_consomns = ','.join(['m','p','r','l','s','n','g'])
@@ -18,9 +20,10 @@ def arguments():
     parser.add_argument('-o','--output',help='Output file [default: \'\'/stdout]',default='',required=False)
     parser.add_argument('-t','--top-next',help='Top letter for the next [default: 5]',default='5',required=False)
     parser.add_argument('-n','--get-next',help='Calculate the number of words available for each possible next letter [default: false]',action='store_true')
-    parser.add_argument('-v','--vocals',help='List of comma-separated vocals [default: %s]' % (def_voc),default=def_voc,required=False)
-    parser.add_argument('-c','--consomns',help='List of comma-separated consomns [default: %s]' % (def_consomns),default=def_consomns,required=False)
-    parser.add_argument('-d','--no-check-dict',help='Check if the resulting words are in the Germany dictionary [default: true]',action='store_false')
+    parser.add_argument('--vocals',help='List of comma-separated vocals [default: %s]' % (def_voc),default=def_voc,required=False)
+    parser.add_argument('--consomns',help='List of comma-separated consomns [default: %s]' % (def_consomns),default=def_consomns,required=False)
+    parser.add_argument('--no-check-dict',help='Check if the resulting words are in the German dictionary [default: true]',action='store_false')
+    parser.add_argument('--random',help='Display the output in random order [default: false]',action='store_true')
 
     try:
         options = parser.parse_args()
@@ -51,6 +54,8 @@ def arguments():
     consomns = options.consomns.split(',')
 
     chk_dict = options.no_check_dict
+
+    out_rnd  = options.random
         
     return (size,top,out,options.get_next)
 
@@ -74,6 +79,11 @@ def extend(vocals, consomns):
 ################################
 
 def print_array(array,out=''):
+    global out_rnd
+
+    if out_rnd:
+        random.shuffle(array)
+
     if '' == out:
         for e in array:
             print(e, end='\t')
