@@ -7,13 +7,11 @@ import multiprocessing as mp
 import random
 
 def arguments():
-    global vocals, consomns
-    global chk_dict
-    global out_rnd
-
+    # Currently known letters
     def_voc = ','.join(['a','i','o','e','ei'])
-    def_consomns = ','.join(['m','p','r','l','s','n','g'])
+    def_consomns = ','.join(['m','p','r','l','s','n','g','t','d'])
 
+    # Parse inputs
     parser = argparse.ArgumentParser(description='List of German words with given letters')
 
     parser.add_argument('-s','--size',help='Size of words [default: 3]',default='3',required=False)
@@ -25,39 +23,41 @@ def arguments():
     parser.add_argument('--no-check-dict',help='Check if the resulting words are in the German dictionary [default: true]',action='store_false')
     parser.add_argument('--random',help='Display the output in random order [default: false]',action='store_true')
 
-    try:
-        options = parser.parse_args()
-    except:
-        sys.exit(0)
+    options = parser.parse_args()
+
+    # Parameters container
+    params = {}
 
     if options.size.isdigit():
-        size = int(options.size)
+        params['size'] = int(options.size)
     else:
         print('Error: size format wrong: '+options.size)
         sys.exit(1)
 
     if options.top_next.isdigit():
-        top = int(options.top_next)
+        params['top'] = int(options.top_next)
     else:
         print('Error: top format wrong: '+options.top_next)
 
     if '' == options.output:
-        out=''
+        params['out']=''
     else:
         if os.path.isdir(os.path.dirname(options.output)) or '' == os.path.dirname(options.output):
-            out=options.output
+            params['out']=options.output
         else:
             print('Error for output file: '+options.output)
             sys.exit(1)
 
-    vocals   = options.vocals.split(',')
-    consomns = options.consomns.split(',')
+    params['vocals']   = options.vocals.split(',')
+    params['consomns'] = options.consomns.split(',')
 
-    chk_dict = options.no_check_dict
+    params['chk_dict'] = options.no_check_dict
 
-    out_rnd  = options.random
+    params['out_rnd']  = options.random
+
+    params['next'] = options.get_next
         
-    return (size,top,out,options.get_next)
+    return params
 
 
 ################################
@@ -78,10 +78,9 @@ def extend(vocals, consomns):
 
 ################################
 
-def print_array(array,out=''):
-    global out_rnd
+def print_array(array,out='',rnd=False):
 
-    if out_rnd:
+    if rnd:
         random.shuffle(array)
 
     if '' == out:
@@ -99,12 +98,12 @@ def print_array(array,out=''):
 def add_layer(blocks,size):
     if 1>=size:
         return blocks
-    else:
-        out = set()
-        for b in blocks:
-            for e in add_layer(blocks,size-1):
-                out.add(b+e)
-        return out
+
+    out = set()
+    for b in blocks:
+        for e in add_layer(blocks,size-1):
+            out.add(b+e)
+    return out
 
 def generate_words(blocks, size):
     out = set()
@@ -123,51 +122,43 @@ def generate_words(blocks, size):
 
 ################################
 
-def prune(words):
-    global chk_dict
+def prune(words,chk=False):
 
-    if chk_dict:
+    if chk:
         d = enchant.Dict('de_DE')
-
         return (sorted(set(filter(lambda w: d.check(w) or d.check(w.title()), words))))
-    else:
-        return (sorted(words))
+
+    return (sorted(words))
 
 ################################
 
-def get_words(vocals,consomns,size,out='',p=False):
+def get_words(parameters,p=False):
+
     print('.', end=' ',flush=True)
-    blocks = init(vocals,consomns)
-    blocks += extend(vocals,consomns)
+    blocks = init(parameters['vocals'],parameters['consomns'])
+    blocks += extend(parameters['vocals'],parameters['consomns'])
 
-    w = generate_words(blocks,size)
+    w = generate_words(blocks,parameters['size'])
 
-    dw = prune(w)
+    dw = prune(w,chk=parameters['chk_dict'])
     if p:
         print(str(len(dw))+' German words:')
-        print_array(dw,out=out)
+        print_array(dw,out=parameters['out'],rnd=parameters['out_rnd'])
     else:
         return len(dw)
 
 ################################
 
-def next_letter(top,size):
-    global vocals, consomns
+def next_letter(parameters):
 
     allelements = set(list('abcdefghijklmnopqrstuvwxyzäöü')+['ei','ai','eu','au','ch','sch','sp','st'])
-    currentelements = set(vocals+consomns)
+    currentelements = set(parameters['vocals']+parameters['consomns'])
     remaining = allelements-currentelements
 
     pool = mp.Pool(mp.cpu_count())
-    #print(mp.cpu_count())
 
     possible = {}
-    #for e in remaining:
-    #    print('.',end=' ',flush=True)
-    #    possible[e] = get_words(vocals,consomns+[e],size,p=False)
-    #p=False
-    results = [(e,pool.apply(get_words, args=(vocals,consomns+[e],size))) for e in remaining]
-    #print(results)
+    results = [(e,pool.apply(get_words, args=(parameters['vocals'],parameters['consomns']+[e],parameters['size']))) for e in remaining]
 
     for r in results:
         (l,c) = r
@@ -178,22 +169,17 @@ def next_letter(top,size):
     for r in [k+': '+str(v) for k,v in sorted(possible.items(), key=lambda item: item[1], reverse=True)]:
         print(r)
         n+=1
-        if n>=top:
-            break;
+        if n>=parameters['top']:
+            break
 
 
 ################################
 
 if __name__ == '__main__':
-    global vocals,consomns
 
-    (size,top,out,gnext) = arguments()
+    parameters = arguments()
 
-    #vocals = ['a','i','o','e','ei']
-    #consomns = ['m','p','r','l','s','n','g']
+    get_words(parameters,p=True)
 
-    get_words(vocals,consomns,size,out=out,p=True)
-
-    if gnext:
-        next_letter(top,size)
-
+    if parameters['next']:
+        next_letter(parameters)
