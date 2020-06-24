@@ -188,6 +188,14 @@ def get_words(parameters, p=False):
 
 ################################
 
+def pool_wrap_get_words(parameters, letter, p=False):
+    params = parameters.copy()
+    params['consomns'] += [letter]
+    return get_words(params)
+
+
+################################
+
 def next_letter(parameters):
 
     allelements = set(list('abcdefghijklmnopqrstuvwxyzäöü')+['ei', 'ai', 'eu',
@@ -198,10 +206,10 @@ def next_letter(parameters):
     pool = mp.Pool(mp.cpu_count())
 
     possible = {}
-    results = [(e, pool.apply(get_words,
-                              args=(parameters['vocals'],
-                                    parameters['consomns']+[e],
-                                    parameters['size']))) for e in remaining]
+    results = [(e, pool.apply(
+            pool_wrap_get_words,
+            args=(parameters, e)
+        )) for e in remaining]
 
     for r in results:
         (l, c) = r
