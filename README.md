@@ -14,7 +14,11 @@ This project offers such an option.
 
 ## Install
 
-You need a `python3` installation, and possibly (at least I needed to) add the optional packages `scipy` and `enchant` with the needed dictionary.
+You need a `python3` installation.
+
+Additionally, you will need:
+- `pyenchant`
+- A dictionary (e.g. `hunspell-de-de`)
 
 ## Usage
 

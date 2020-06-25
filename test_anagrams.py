@@ -2,6 +2,7 @@ import anagrams
 
 import os
 import re
+import sys
 
 
 def test_init():
@@ -115,3 +116,41 @@ def test_next_letter(capsys):
         '\nNext letter to add: (\n\w+: \d){5}',
         out
     ) is not None
+
+
+def test_arguments_defaults(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', ['anagrams'])
+    arguments = anagrams.arguments()
+    assert arguments['size'] == 3
+    assert arguments['out'] == ''
+    assert arguments['top'] == 5
+    assert arguments['next'] is False
+    assert arguments['chk_dict'] is True
+    assert arguments['out_rnd'] is False
+    assert arguments['vocals'] == ['a', 'i', 'o', 'e', 'ei']
+    assert arguments['consomns'] == [
+            'm', 'p', 'r', 'l', 's', 'n', 'g', 't', 'd'
+            ]
+
+
+def test_arguments(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', [
+        'anagrams',
+        '-s', '1',
+        '-o', 'foo.dat',
+        '-t', '4',
+        '-n',
+        '--vocals', 'a,e',
+        '--consomns', 'b,c',
+        '--no-check-dict',
+        '--random'
+        ])
+    arguments = anagrams.arguments()
+    assert arguments['size'] == 1
+    assert arguments['out'] == 'foo.dat'
+    assert arguments['top'] == 4
+    assert arguments['next'] is True
+    assert arguments['chk_dict'] is False
+    assert arguments['out_rnd'] is True
+    assert arguments['vocals'] == ['a', 'e']
+    assert arguments['consomns'] == ['b', 'c']
