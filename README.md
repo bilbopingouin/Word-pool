@@ -2,6 +2,9 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/bilbopingouin/word-pool/badge)](https://www.codefactor.io/repository/github/bilbopingouin/word-pool)
 [![Build Status](https://semaphoreci.com/api/v1/bilbopingouin/word-pool/branches/master/shields_badge.svg)](https://semaphoreci.com/bilbopingouin/word-pool)
+[![codecov](https://codecov.io/gh/bilbopingouin/Word-pool/branch/master/graph/badge.svg)](https://codecov.io/gh/bilbopingouin/Word-pool)
+
+
 
 ## Objective
 
