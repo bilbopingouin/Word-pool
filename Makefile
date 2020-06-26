@@ -12,3 +12,6 @@ unittests:
 	@echo "Running the unit tests..."
 	@python3 -m coverage run -m pytest --capture=sys
 	@echo "...done"
+
+report:
+	@python3 -m coverage report -m | grep anagrams.py

@@ -61,13 +61,14 @@ def arguments():
     if options.size.isdigit():
         params['size'] = int(options.size)
     else:
-        print('Error: size format wrong: '+options.size)
+        sys.stderr.write('Error: size format wrong: '+options.size)
         sys.exit(1)
 
     if options.top_next.isdigit():
         params['top'] = int(options.top_next)
     else:
-        print('Error: top format wrong: '+options.top_next)
+        sys.stderr.write('Error: top format wrong: '+options.top_next)
+        sys.exit(1)
 
     if '' == options.output:
         params['out'] = ''
@@ -76,7 +77,7 @@ def arguments():
            or '' == os.path.dirname(options.output):
             params['out'] = options.output
         else:
-            print('Error for output file: '+options.output)
+            sys.stderr.write('Error for output file: '+options.output)
             sys.exit(1)
 
     params['vocals'] = options.vocals.split(',')
@@ -228,11 +229,14 @@ def next_letter(parameters):
 
 ################################
 
-if __name__ == '__main__':
-
+def main():
     parameters = arguments()
 
     get_words(parameters, p=True)
 
     if parameters['next']:
         next_letter(parameters)
+
+
+if __name__ == '__main__':
+    main()

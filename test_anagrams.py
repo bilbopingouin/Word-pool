@@ -3,6 +3,7 @@ import anagrams
 import os
 import re
 import sys
+import pytest
 
 
 def test_init():
@@ -154,3 +155,53 @@ def test_arguments(monkeypatch):
     assert arguments['out_rnd'] is True
     assert arguments['vocals'] == ['a', 'e']
     assert arguments['consomns'] == ['b', 'c']
+
+
+def test_argument_wrong_size(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', [
+        'anagrams',
+        '-s', 'a',
+        ])
+    with pytest.raises(SystemExit):
+        anagrams.arguments()
+
+
+def test_argument_wrong_top(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', [
+        'anagrams',
+        '-t', 'a',
+        ])
+    with pytest.raises(SystemExit):
+        anagrams.arguments()
+
+
+def test_argument_wrong_outputdir(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', [
+        'anagrams',
+        '-o', 'hopefully_non_existing_dir/words.dat',
+        ])
+    with pytest.raises(SystemExit):
+        anagrams.arguments()
+
+
+def test_main(monkeypatch, capsys):
+    monkeypatch.setattr(sys, 'argv', [
+        'anagrams',
+        '-s', '1',
+        '--vocals', 'a',
+        '--consomns', 'b',
+        '--no-check-dict',
+        '-n'
+        ])
+    anagrams.main()
+    out, err = capsys.readouterr()
+    assert re.match(
+        '. 3 German words:\na\tb\tba\t\n\nNext letter to add: (\n\w+: \d){5}',
+        out
+    ) is not None
+
+
+def test_run(capsys):
+    os.system(
+        'python3 anagramps.py --s 1 --vocals a --consomns b --no-check-dict'
+        )
