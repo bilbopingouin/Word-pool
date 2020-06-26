@@ -199,9 +199,3 @@ def test_main(monkeypatch, capsys):
         '. 3 German words:\na\tb\tba\t\n\nNext letter to add: (\n\w+: \d){5}',
         out
     ) is not None
-
-
-def test_run(capsys):
-    os.system(
-        'python3 anagramps.py --s 1 --vocals a --consomns b --no-check-dict'
-        )
